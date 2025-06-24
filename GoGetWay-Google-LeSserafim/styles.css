@@ -1,0 +1,243 @@
+/* Vase layout */
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+#container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Sidebar */
+#sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100vh;
+  width: 300px;
+  background: #f9f9f9;
+  padding: 20px;
+  box-sizing: border-box;
+  border-right: 1px solid #ddd;
+  overflow: visible;
+}
+
+.sidebar-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: visible;
+}
+
+.sidebar-footer {
+  text-align: center;
+  font-size: 13px;
+  color: #777;
+  padding-top: 12px;
+  border-top: 1px solid #ccc;
+}
+
+/* Map */
+#map {
+  flex-grow: 1;
+}
+
+#sidebar h2 {
+  font-size: 20px;
+  margin-bottom: 16px;
+  color: #333;
+  border-bottom: 2px solid #ccc;
+  padding-bottom: 8px;
+}
+
+/* Event content */
+.event-item {
+  background-color: white;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.event-item:hover {
+  background-color: #e8f4ff;
+  border-color: #0077cc;
+}
+
+/* Event button */
+.event-item button {
+  cursor: pointer;
+  padding: 4px 8px;
+  border: 1px solid #0077cc;
+  background: white;
+  color: #0077cc;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.event-item button:hover {
+  background-color: #0077cc;
+  color: white;
+}
+
+/* Switch */
+.switch {
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+.switch input {
+  display: none;
+}
+
+/* Return button */
+.slider {
+  position: relative;
+  width: 50px;
+  height: 26px;
+  background-color: #ccc;
+  border-radius: 13px;
+  transition: background-color 0.3s;
+  margin-right: 10px;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  left: 2px;
+  top: 2px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.switch input:checked + .slider {
+  background-color: #2196F3;
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(24px);
+}
+
+.label-text {
+  font-size: 16px;
+  user-select: none;
+}
+
+/* Buttons */
+button {
+  margin-top: 10px;
+  padding: 10px;
+  width: 100%;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: white;
+}
+
+#start-btn {
+  background-color: #1976d2;
+}
+
+#my-location-btn {
+  background-color: #4caf50;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Points */
+#score-container {
+  text-align: center;
+}
+
+#score {
+  align-self: center;
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 20px;
+}
+
+/* Tooltip and redeem */
+.tooltip-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-top: 10px;
+  z-index: 10;
+}
+
+.tooltip-text {
+  visibility: hidden;
+  width: 220px;
+  background-color: #333;
+  color: #fff;
+  font-size: 13px;
+  text-align: center;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: normal;
+
+  position: absolute;
+  top: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  
+  z-index: 9999;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.tooltip-wrapper:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+#redeem-link {
+  font-weight: bold;
+  text-decoration: underline;
+  color: #0077cc;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+#redeem-link.disabled {
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+#redeem-link:not(.disabled) {
+  color: #0077cc;
+  cursor: pointer;
+}
+
+#corner-icon {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  width: 40px; 
+  height: 40px;
+  z-index: 9999; 
+}
+

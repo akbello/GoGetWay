@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Event Navigator</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script
+    src="https://maps.googleapis.com/maps/api/js?key=REPLACE_YOUR_API_KEY_HERE&libraries=marker,places,geometry&callback=initMap"
+    async
+    defer
+    ></script>
+    <script src="app.js" defer></script>
+</head>
+<body>
+    <div id="container">
+        <!-- Side Content -->
+        <div id="sidebar">
+            <div class="sidebar-content">
+                <h2>Google x Le Sserafim <br />Pop Up Event</h2>
+                <div id="event-list"></div>
+
+                <label class="switch hidden" id="return-toggle-container">
+                <input type="checkbox" id="return-toggle" />
+                <span class="slider"></span>
+                <span class="label-text">Return</span>
+                </label>
+
+                <button id="start-btn" class="hidden">Start Navigation</button>
+                <button id="my-location-btn" class="hidden">My Location</button>
+
+                <div id="score">Points Collected: 0</div>
+                <div class="tooltip-wrapper">
+                <a href="/rewards.html" id="redeem-link" class="disabled">Redeem?</a>
+                <div class="tooltip-text">
+                    Complete all missions to redeem your reward.
+                </div>
+                </div>
+            </div>
+            <footer class="sidebar-footer">
+                <b>© GoGetWay 2025.</b>
+            </footer>
+        </div>
+
+        <!-- Google Maps -->
+        <div id="map"></div>
+    </div>
+
+    <img src="./assets/gogetway-logo.jpg" id="corner-icon" />
+</body>
+</html>
