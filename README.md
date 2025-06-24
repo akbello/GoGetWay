@@ -4,3 +4,7 @@
 GoGetWay is a web application that let you view your event’s location, not one but all. Designed to enhance event experiences, every event location is pinned on the map to ease your event day trip. Complete all missions and redeem your reward.
 
 To start the application, please ensure you replace the script source in the <em>index.html</em> file with a valid Google Maps API key.
+
+Two applications are available:
+1. GoGetWay-main folder for the landmark event.
+2. GoGetWay-Google-LeSserafim folder for the popup event.
