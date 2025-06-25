@@ -12,8 +12,6 @@ const visitedEvents = new Set();
 const defaultIcon = "./assets/gogetway-logo.jpg";
 const eventIcon = "./assets/popup-logo.jpg";
 
-
-// Event locations (name, short desc, lat, long)
 const events = [
   { id: 1, title: "Westfield World Trade Center", description: "Voice of the Future Experience - Step into a Google-powered sound booth to remix LE SSERAFIM vocals with AI-generated beats.", position: { lat: 40.712742, lng: -74.013382 }, icon: eventIcon },
   { id: 2, title: "Union Square", description: "Search Your Style - Try on LE SSERAFIM-inspired AR outfits and generate Google Lens fashion boards in real time.", position: { lat: 40.7359, lng: -73.9911 }, icon: eventIcon },
@@ -22,8 +20,8 @@ const events = [
   { id: 5, title: "Flushing Meadows - Corona Park", description: "Mind Maze - A tech-meets-K-pop escape maze powered by Google Assistant and themed around LE SSERAFIM music videos.", position: { lat: 40.768452, lng: -73.832764 }, icon: eventIcon }
 ];
 
+// --- Helper Functions ---
 
-// Styling for the default marker
 function createDefaultMarkerContentWithImage(title, imgUrl) {
   const div = document.createElement("div");
   div.title = title;
@@ -33,7 +31,6 @@ function createDefaultMarkerContentWithImage(title, imgUrl) {
   div.style.boxShadow = "0 0 4px rgba(0,0,0,0.5)";
   div.style.cursor = "pointer";
   div.style.backgroundColor = "#fff";
-
   const img = document.createElement("img");
   img.src = imgUrl;
   img.alt = title;
@@ -42,12 +39,10 @@ function createDefaultMarkerContentWithImage(title, imgUrl) {
   img.style.objectFit = "cover";
   img.style.display = "block";
   img.style.borderRadius = "6px";
-
   div.appendChild(img);
   return div;
 }
 
-// Styling for a visited marker
 function createVisitedMarkerContentWithImage(title, imgUrl) {
   const div = createDefaultMarkerContentWithImage(title, imgUrl);
   div.style.border = "2px solid green";
@@ -55,7 +50,6 @@ function createVisitedMarkerContentWithImage(title, imgUrl) {
   return div;
 }
 
-// Updates points display and redeem based on the user’s score
 function updateScoreDisplay() {
   const scoreEl = document.getElementById("score");
   const redeemLink = document.getElementById("redeem-link");
@@ -67,21 +61,17 @@ function updateScoreDisplay() {
     redeemLink.classList.remove("disabled");
     redeemLink.removeAttribute("aria-disabled");
     redeemLink.style.pointerEvents = "auto";
-
     if (tooltip) tooltip.style.display = "none";
-
     redeemLink.replaceWith(redeemLink.cloneNode(true));
     const newRedeemLink = document.getElementById("redeem-link");
     newRedeemLink.addEventListener("click", () => {
-      alert("🎉 Congratulations! You've completed all missions, you can now redeem your reward! Head to XXXX to exchange your reward.");
+      alert("🎉 Congratulations! You've completed all missions, you can now redeem your reward! Head to the nearest booth to exchange your reward.");
     });
   } else {
     redeemLink.classList.add("disabled");
     redeemLink.setAttribute("aria-disabled", "true");
     redeemLink.style.pointerEvents = "none";
-
     if (tooltip) tooltip.style.display = "block";
-
     redeemLink.replaceWith(redeemLink.cloneNode(true));
     const newRedeemLink = document.getElementById("redeem-link");
     newRedeemLink.addEventListener("click", (e) => {
@@ -90,21 +80,84 @@ function updateScoreDisplay() {
   }
 }
 
-// Display info window with event details and image
-function showFallbackInfoWindow(event, marker) {
-  const content = `
-    <div style="max-width: 220px;">
-      <strong>${event.title}</strong><br/>
-      ${event.description}
-      <img src="${event.icon}" style="width:100%; margin-top: 6px; border-radius: 4px;" />
-    </div>`;
-  infoWindow.setContent(content);
-  infoWindow.open(map, marker);
-  map.panTo(event.position);
-  map.setZoom(14);
+function findClosestUnvisitedEvent() {
+  if (!userLocation) return null;
+
+  let closest = null;
+  let shortestDistance = Infinity;
+
+  events.forEach(event => {
+    if (!visitedEvents.has(event.title)) {
+      const distance = google.maps.geometry.spherical.computeDistanceBetween(
+        new google.maps.LatLng(userLocation),
+        new google.maps.LatLng(event.position)
+      );
+      if (distance < shortestDistance) {
+        shortestDistance = distance;
+        closest = event;
+      }
+    }
+  });
+
+  return closest;
 }
 
-// Initialise the Google Map, places event markers, sets up event list with quizzes, user location, and paths
+function drawRedLineToClosestEvent() {
+  if (redLinePath) redLinePath.setMap(null);
+  if (!userLocation || !closestEvent) return;
+
+  redLinePath = new google.maps.Polyline({
+    path: [userLocation, closestEvent.position],
+    geodesic: true,
+    strokeColor: "#FF0000",
+    strokeOpacity: 1.0,
+    strokeWeight: 3,
+    map: map,
+  });
+}
+
+function startNavigationToClosestEvent() {
+  if (!userLocation || !closestEvent) return;
+  const origin = `${userLocation.lat},${userLocation.lng}`;
+  const destination = `${closestEvent.position.lat},${closestEvent.position.lng}`;
+  const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+  window.open(url, "_blank");
+}
+
+function setupReturnToggle() {
+  const toggle = document.getElementById("return-toggle");
+  toggle.addEventListener("change", () => {
+    if (toggle.checked) {
+      const lastEvent = events[events.length - 1];
+      if (returnPath) returnPath.setMap(null);
+      returnPath = new google.maps.Polyline({
+        path: [lastEvent.position, startLocation],
+        geodesic: true,
+        strokeColor: "#000",
+        strokeOpacity: 1.0,
+        strokeWeight: 2,
+        icons: [
+          {
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              fillOpacity: 0.4,
+              strokeOpacity: 0.6,
+              scale: 2,
+            },
+            offset: "0",
+            repeat: "15px",
+          },
+        ],
+        map: map,
+      });
+    } else {
+      if (returnPath) returnPath.setMap(null);
+    }
+  });
+}
+
+// --- Core Map Logic ---
+
 function initMap() {
   map = new google.maps.Map(document.getElementById("map"), {
     center: { lat: 20.0, lng: 0.0 },
@@ -113,14 +166,7 @@ function initMap() {
   });
 
   infoWindow = new google.maps.InfoWindow();
-
-  // Reset infoWindowShown flag on close to allow refresh on next click
-  google.maps.event.addListener(infoWindow, "closeclick", () => {
-    markers.forEach((m) => m.infoWindowShown = false);
-  });
-
   const placesService = new google.maps.places.PlacesService(map);
-
   const eventListDiv = document.getElementById("event-list");
   eventListDiv.innerHTML = "";
 
@@ -148,39 +194,34 @@ function initMap() {
         return;
       }
 
-      const request = {
-        location: event.position,
-        radius: '50', 
-        keyword: event.title,
-      };
-
+      const request = { location: event.position, radius: '50', keyword: event.title };
       placesService.nearbySearch(request, (results, status) => {
         if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
           const placeId = results[0].place_id;
           placesService.getDetails({ placeId: placeId, fields: ['photos', 'name'] }, (place, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK) {
-              let photoUrl = event.icon; 
-              if (place.photos && place.photos.length > 0) {
-                photoUrl = place.photos[0].getUrl({ maxWidth: 250 });
-              }
-              const content = `
-                <div style="max-width: 220px;">
-                  <strong>${event.title}</strong><br/>
-                  ${event.description}
-                  <img src="${photoUrl}" alt="${event.title}" style="width:100%; margin-top: 6px; border-radius: 4px;" />
-                </div>`;
-              infoWindow.setContent(content);
-              infoWindow.open(map, marker);
-              map.panTo(event.position);
-              map.setZoom(14);
-              marker.infoWindowShown = true;
-            } else {
-              showFallbackInfoWindow(event, marker);
-              marker.infoWindowShown = true;
+            let photoUrl = event.icon;
+            if (status === google.maps.places.PlacesServiceStatus.OK && place.photos?.length > 0) {
+              photoUrl = place.photos[0].getUrl({ maxWidth: 250 });
             }
+            const content = `<div style="max-width: 220px;">
+              <strong>${event.title}</strong><br/>${event.description}
+              <img src="${photoUrl}" style="width:100%; margin-top: 6px; border-radius: 4px;" />
+            </div>`;
+            infoWindow.setContent(content);
+            infoWindow.open(map, marker);
+            map.panTo(event.position);
+            map.setZoom(14);
+            marker.infoWindowShown = true;
           });
         } else {
-          showFallbackInfoWindow(event, marker);
+          const fallback = `<div style="max-width: 220px;">
+            <strong>${event.title}</strong><br/>${event.description}
+            <img src="${event.icon}" style="width:100%; margin-top: 6px; border-radius: 4px;" />
+          </div>`;
+          infoWindow.setContent(fallback);
+          infoWindow.open(map, marker);
+          map.panTo(event.position);
+          map.setZoom(14);
           marker.infoWindowShown = true;
         }
       });
@@ -204,14 +245,8 @@ function initMap() {
         return;
       }
       if (checkbox.checked) {
-        const userAnswer = prompt(
-          `Obtained code in "${event.title}"?\nEnter the code:`
-        );
-        if (
-          userAnswer &&
-          userAnswer.trim().toLowerCase() ===
-            correctAnswers[event.title].toLowerCase()
-        ) {
+        const userAnswer = prompt(`Obtained code in "${event.title}"?\nEnter the code:`);
+        if (userAnswer?.trim().toLowerCase() === correctAnswers[event.title].toLowerCase()) {
           userScore += 50;
           updateScoreDisplay();
           visitedEvents.add(event.title);
@@ -219,28 +254,15 @@ function initMap() {
           checkbox.disabled = true;
 
           marker.title = `${event.title} (Visited)`;
-
-          marker.content.animate(
-            [
-              { transform: "scale(1)" },
-              { transform: "scale(1.4)" },
-              { transform: "scale(1)" },
-            ],
-            { duration: 600 }
-          );
-
-          marker.content = createVisitedMarkerContentWithImage(
-            marker.title,
-            event.icon
-          );
+          marker.content.animate([{ transform: "scale(1)" }, { transform: "scale(1.4)" }, { transform: "scale(1)" }], { duration: 600 });
+          marker.content = createVisitedMarkerContentWithImage(marker.title, event.icon);
           marker.content.addEventListener("click", () => {
             map.panTo(event.position);
             map.setZoom(14);
           });
-
           div.style.backgroundColor = "#d4edda";
 
-          closestEvent = findNextUnvisitedEventInOrder();
+          closestEvent = findClosestUnvisitedEvent();
           drawRedLineToClosestEvent();
         } else {
           alert("Invalid code. Please try again!");
@@ -269,7 +291,7 @@ function initMap() {
     eventListDiv.appendChild(div);
   });
 
-  // Draw dashed lines connecting all events
+  // Draw dashed path between all event locations
   const pathCoords = events.map((e) => e.position);
   const dashedPath = new google.maps.Polyline({
     path: pathCoords,
@@ -277,139 +299,57 @@ function initMap() {
     strokeColor: "#888",
     strokeOpacity: 0.6,
     strokeWeight: 2,
-    icons: [
-      {
-        icon: { path: "M 0,-1 0,1", strokeOpacity: 1, scale: 2 },
-        offset: "0",
-        repeat: "8px",
-      },
-    ],
+    icons: [{ icon: { path: "M 0,-1 0,1", strokeOpacity: 1, scale: 2 }, offset: "0", repeat: "8px" }],
   });
   dashedPath.setMap(map);
 
-  // FIT MAP TO SHOW ALL EVENT MARKERS ON LOAD
   const bounds = new google.maps.LatLngBounds();
-  events.forEach((event) => {
-    bounds.extend(event.position);
-  });
+  events.forEach((event) => bounds.extend(event.position));
   map.fitBounds(bounds);
 
   if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        userLocation = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        };
-        startLocation = { ...userLocation };
+    navigator.geolocation.getCurrentPosition((position) => {
+      userLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+      };
+      startLocation = { ...userLocation };
 
-        const userMarker = new google.maps.marker.AdvancedMarkerElement({
-          position: userLocation,
-          map,
-          title: "You are here",
-          content: (() => {
-            const div = document.createElement("div");
-            div.title = "You are here";
-            div.style.width = "15px";
-            div.style.height = "15px";
-            div.style.borderRadius = "50%";
-            div.style.backgroundColor = "#4285F4";
-            div.style.border = "2px solid white";
-            div.style.boxShadow = "0 0 6px rgba(66,133,244,0.8)";
-            return div;
-          })(),
-        });
+      const userMarker = new google.maps.marker.AdvancedMarkerElement({
+        position: userLocation,
+        map,
+        title: "You are here",
+        content: (() => {
+          const div = document.createElement("div");
+          div.title = "You are here";
+          div.style.width = "15px";
+          div.style.height = "15px";
+          div.style.borderRadius = "50%";
+          div.style.backgroundColor = "#4285F4";
+          div.style.border = "2px solid white";
+          div.style.boxShadow = "0 0 6px rgba(66,133,244,0.8)";
+          return div;
+        })(),
+      });
 
-        closestEvent = findNextUnvisitedEventInOrder();
-        drawRedLineToClosestEvent();
+      closestEvent = findClosestUnvisitedEvent();
+      drawRedLineToClosestEvent();
 
-        document.getElementById("start-btn").classList.remove("hidden");
-        document.getElementById("my-location-btn").classList.remove("hidden");
-        document.getElementById("return-toggle-container").classList.remove("hidden");
+      document.getElementById("start-btn").classList.remove("hidden");
+      document.getElementById("my-location-btn").classList.remove("hidden");
+      document.getElementById("return-toggle-container").classList.remove("hidden");
 
-        setupReturnToggle();
+      setupReturnToggle();
 
-        document.getElementById("start-btn").onclick = () => startNavigationToClosestEvent();
-        document.getElementById("my-location-btn").onclick = () => {
-          map.panTo(userLocation);
-          map.setZoom(16);
-        };
-      },
-      (error) => console.warn("Geolocation error:", error.message)
-    );
-  } else {
-    console.warn("Geolocation not supported");
+      document.getElementById("start-btn").onclick = () => startNavigationToClosestEvent();
+      document.getElementById("my-location-btn").onclick = () => {
+        map.panTo(userLocation);
+        map.setZoom(16);
+      };
+    });
   }
 
   updateScoreDisplay();
-}
-
-// Returns the next event in the list that the user has not yet visited
-function findNextUnvisitedEventInOrder() {
-  for (let i = 0; i < events.length; i++) {
-    if (!visitedEvents.has(events[i].title)) {
-      return events[i];
-    }
-  }
-  return null;
-}
-
-// Draws red line from the user’s current location to the closest unvisited event
-function drawRedLineToClosestEvent() {
-  if (redLinePath) redLinePath.setMap(null);
-  if (!userLocation || !closestEvent) return;
-
-  redLinePath = new google.maps.Polyline({
-    path: [userLocation, closestEvent.position],
-    geodesic: true,
-    strokeColor: "#FF0000",
-    strokeOpacity: 1.0,
-    strokeWeight: 3,
-    map: map,
-  });
-}
-
-// Opens Google Maps directions in a new tab from the user’s location to the closest unvisited event
-function startNavigationToClosestEvent() {
-  if (!userLocation || !closestEvent) return;
-  const origin = `${userLocation.lat},${userLocation.lng}`;
-  const destination = `${closestEvent.position.lat},${closestEvent.position.lng}`;
-  const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
-  window.open(url, "_blank");
-}
-
-// Toggle control to show or hide a dotted line from the last event back to the user's start point
-function setupReturnToggle() {
-  const toggle = document.getElementById("return-toggle");
-  toggle.addEventListener("change", () => {
-    if (toggle.checked) {
-      const lastEvent = events[events.length - 1];
-
-      if (returnPath) returnPath.setMap(null);
-      returnPath = new google.maps.Polyline({
-        path: [lastEvent.position, startLocation],
-        geodesic: true,
-        strokeColor: "#000",
-        strokeOpacity: 1.0,
-        strokeWeight: 2,
-        icons: [
-          {
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              fillOpacity: 0.4,
-              strokeOpacity: 0.6,
-              scale: 2,
-            },
-            offset: "0",
-            repeat: "15px",
-          },
-        ],
-        map: map,
-      });
-    } else {
-      if (returnPath) returnPath.setMap(null);
-    }
-  });
 }
 
 window.initMap = initMap;
