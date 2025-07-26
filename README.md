@@ -2,6 +2,7 @@
 <img src="GoGetWay-main/assets/gogetway-logo.jpg" alt="GoGetWay Logo" width="200"/>
 
 <em>Go now, Get rewarded, and know your Way.</em>
+Demo link: https://youtu.be/Z-ChNhWglJ0
 
 GoGetWay is a web application that lets you view your event’s location, not one but all. Designed to enhance event experiences, every event location is pinned on the map to ease your event day trip. Complete all missions and redeem your reward.
 
